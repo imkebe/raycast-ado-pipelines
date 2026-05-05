@@ -1,0 +1,51 @@
+{
+  "name": "raycast-ado-pipelines",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Raycast extension for browsing and triggering Azure DevOps pipelines",
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "lint": "ray lint",
+    "fix-lint": "ray lint --fix"
+  },
+  "dependencies": {
+    "@raycast/api": "^1.80.0",
+    "@raycast/utils": "^1.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.7.2"
+  },
+  "raycast": {
+    "schemaVersion": 1,
+    "title": "ADO Pipelines",
+    "description": "Browse, inspect, and trigger Azure DevOps pipelines",
+    "icon": "icon.png",
+    "author": "your-name",
+    "categories": [
+      "Developer Tools"
+    ],
+    "license": "MIT",
+    "commands": [
+      {
+        "name": "browse-pipelines",
+        "title": "Browse Pipelines",
+        "description": "View and search Azure DevOps pipelines",
+        "mode": "view"
+      },
+      {
+        "name": "overview",
+        "title": "Overview",
+        "description": "See connection status and extension summary",
+        "mode": "view"
+      },
+      {
+        "name": "trigger-pipeline",
+        "title": "Trigger Pipeline",
+        "description": "Trigger a pipeline run",
+        "mode": "view"
+      }
+    ]
+  }
+}
