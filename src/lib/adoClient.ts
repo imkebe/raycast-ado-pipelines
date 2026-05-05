@@ -137,13 +137,44 @@ export async function getStepDetail(runId: number, record: PipelineTimelineRecor
   };
 }
 
-export async function triggerPipeline(pipelineId: number): Promise<PipelineRun> {
-  const { authHeader, project } = await resolveContext();
-  const url = `${projectApiBase(project)}/pipelines/${pipelineId}/runs?api-version=7.1-preview.1`;
+export type QueueRunOptions = {
+  projectId?: string;
+  branch?: string;
+  variables?: Record<string, string>;
+  templateParameters?: Record<string, string>;
+};
+
+export async function queuePipelineRun(pipelineId: number, options: QueueRunOptions = {}): Promise<PipelineRun> {
+  const { authHeader, project } = await resolveContext(options.projectId);
+  const url = `${projectApiBase(project)}/build/builds?api-version=7.1`;
+
+  const body: {
+    definition: { id: number };
+    sourceBranch?: string;
+    parameters?: string;
+    templateParameters?: Record<string, string>;
+  } = {
+    definition: { id: pipelineId },
+  };
+
+  if (options.branch?.trim()) {
+    body.sourceBranch = options.branch.trim();
+  }
+  if (options.variables && Object.keys(options.variables).length > 0) {
+    body.parameters = JSON.stringify(options.variables);
+  }
+  if (options.templateParameters && Object.keys(options.templateParameters).length > 0) {
+    body.templateParameters = options.templateParameters;
+  }
+
   return fetchJson<PipelineRun>(url, authHeader, {
     method: "POST",
-    body: JSON.stringify({ resources: {} }),
+    body: JSON.stringify(body),
   });
+}
+
+export async function triggerPipeline(pipelineId: number): Promise<PipelineRun> {
+  return queuePipelineRun(pipelineId);
 }
 
 export async function listPipelines(): Promise<PipelineDefinition[]> {

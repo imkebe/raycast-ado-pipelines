@@ -1,7 +1,8 @@
 import { Action, ActionPanel, Color, Icon, List } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { useEffect, useMemo, useState } from "react";
-import { listDefinitions, listRunsForProject, PipelineRun } from "./lib/adoClient";
+import { listDefinitions, listRunsForProject, PipelineDefinition, PipelineRun } from "./lib/adoClient";
+import { QueueRunForm } from "./queue-run-form";
 import { getProjects, ProjectEntry } from "./lib/config";
 
 type OverviewRun = {
@@ -79,6 +80,17 @@ function AutoRefreshActions({
   );
 }
 
+
+
+function rerunDefinition(item: OverviewRun): PipelineDefinition | null {
+  const id = item.run.definition?.id;
+  if (!id) return null;
+
+  return {
+    id,
+    name: item.definitionName,
+  };
+}
 export default function OverviewCommand() {
   const [intervalMs, setIntervalMs] = useState<number | null>(null);
   const { data, isLoading, error, revalidate } = useCachedPromise(loadOverview, []);
@@ -113,6 +125,7 @@ export default function OverviewCommand() {
             actions={
               <ActionPanel>
                 <Action title="Refresh" onAction={() => revalidate()} icon={Icon.ArrowClockwise} />
+                {rerunDefinition(item) ? <Action.Push title="Queue Again" target={<QueueRunForm definition={rerunDefinition(item)!} project={item.project} />} icon={Icon.Play} /> : null}
                 <AutoRefreshActions intervalMs={intervalMs} setIntervalMs={setIntervalMs} />
               </ActionPanel>
             }
@@ -136,6 +149,7 @@ export default function OverviewCommand() {
             actions={
               <ActionPanel>
                 <Action title="Refresh" onAction={() => revalidate()} icon={Icon.ArrowClockwise} />
+                {rerunDefinition(item) ? <Action.Push title="Queue Again" target={<QueueRunForm definition={rerunDefinition(item)!} project={item.project} />} icon={Icon.Play} /> : null}
                 <AutoRefreshActions intervalMs={intervalMs} setIntervalMs={setIntervalMs} />
               </ActionPanel>
             }

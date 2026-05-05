@@ -1,15 +1,9 @@
-import { Action, ActionPanel, Detail, Icon, List } from "@raycast/api";
+import { Action, ActionPanel, Icon, List } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 import { getProjects, ProjectEntry } from "./lib/config";
-import {
-  getRunTimelineRecords,
-  getStepDetail,
-  listDefinitions,
-  listRunsForDefinition,
-  PipelineDefinition,
-  PipelineRun,
-  PipelineTimelineRecord,
-} from "./lib/adoClient";
+import { listDefinitions, listRunsForDefinition, PipelineDefinition, PipelineRun } from "./lib/adoClient";
+import { RunStepsList } from "./components";
+import { QueueRunForm } from "./queue-run-form";
 
 function formatDateTime(date?: string): string {
   return date ? new Date(date).toLocaleString() : "N/A";
@@ -17,66 +11,6 @@ function formatDateTime(date?: string): string {
 
 function projectSubtitle(project: ProjectEntry): string {
   return `${project.org}/${project.project}`;
-}
-
-function StepDetailView({ runId, project, step }: { runId: number; project: ProjectEntry; step: PipelineTimelineRecord }) {
-  const { data, isLoading, error } = useCachedPromise(
-    (targetRunId: number, record: PipelineTimelineRecord, projectId: string) => getStepDetail(targetRunId, record, projectId),
-    [runId, step, project.id],
-  );
-
-  if (error) {
-    return <Detail markdown={`# Failed to load step detail\n\n${error.message}`} />;
-  }
-
-  const record = data?.record ?? step;
-  const issues = record.issues?.length
-    ? record.issues.map((issue) => `- **${issue.type ?? "Issue"}:** ${issue.message ?? "No message"}`).join("\n")
-    : "- None";
-  const markdown = `# ${record.name}
-
-## Metadata
-- **Type:** ${record.type ?? "N/A"}
-- **State:** ${record.state ?? "N/A"}
-- **Result:** ${record.result ?? "N/A"}
-- **Started:** ${formatDateTime(record.startTime)}
-- **Finished:** ${formatDateTime(record.finishTime)}
-- **Worker:** ${record.workerName ?? "N/A"}
-
-## Issues
-${issues}
-
-## Log
-\`\`\`
-${data?.logContent?.slice(0, 12000) ?? "No log available for this step."}
-\`\`\``;
-
-  return <Detail isLoading={isLoading} markdown={markdown} />;
-}
-
-function StepsList({ run, project }: { run: PipelineRun; project: ProjectEntry }) {
-  const { data, isLoading, error } = useCachedPromise(getRunTimelineRecords, [run.id, project.id]);
-  const steps = data ?? [];
-
-  return (
-    <List isLoading={isLoading} searchBarPlaceholder="Search steps...">
-      {error ? <List.EmptyView title="Failed to load steps" description={error.message} icon={Icon.Warning} /> : null}
-      {!error && !isLoading && !steps.length ? <List.EmptyView title="No steps found" description="Timeline has no records." /> : null}
-      {steps.map((step) => (
-        <List.Item
-          key={step.id}
-          title={step.name}
-          subtitle={step.type ?? "Step"}
-          accessories={[{ tag: step.state ?? "Unknown" }, { tag: step.result ?? "N/A" }]}
-          actions={
-            <ActionPanel>
-              <Action.Push title="View Step Details" target={<StepDetailView runId={run.id} project={project} step={step} />} />
-            </ActionPanel>
-          }
-        />
-      ))}
-    </List>
-  );
 }
 
 function RunsList({ definition, project }: { definition: PipelineDefinition; project: ProjectEntry }) {
@@ -97,7 +31,7 @@ function RunsList({ definition, project }: { definition: PipelineDefinition; pro
           accessories={[{ tag: run.result ?? "N/A" }, { text: formatDateTime(run.createdDate) }]}
           actions={
             <ActionPanel>
-              <Action.Push title="View Steps" target={<StepsList run={run} project={project} />} />
+              <Action.Push title="View Steps" target={<RunStepsList run={run} project={project} />} />
             </ActionPanel>
           }
         />
@@ -123,6 +57,7 @@ function DefinitionsList({ project }: { project: ProjectEntry }) {
           actions={
             <ActionPanel>
               <Action.Push title="Browse Runs" target={<RunsList definition={definition} project={project} />} />
+              <Action.Push title="Queue Run" target={<QueueRunForm definition={definition} project={project} />} icon={Icon.Play} />
             </ActionPanel>
           }
         />
