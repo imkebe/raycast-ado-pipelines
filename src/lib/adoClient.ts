@@ -12,11 +12,18 @@ export type PipelineDefinition = {
 export type PipelineRun = {
   id: number;
   name?: string;
+  buildNumber?: string;
   state?: string;
   result?: string;
+  queueTime?: string;
+  startTime?: string;
   createdDate?: string;
   finishedDate?: string;
   url?: string;
+  definition?: {
+    id?: number;
+    name?: string;
+  };
 };
 
 export type PipelineTimelineRecord = {
@@ -93,6 +100,13 @@ export async function listDefinitions(projectId?: string): Promise<PipelineDefin
 export async function listRunsForDefinition(definitionId: number, projectId?: string): Promise<PipelineRun[]> {
   const { authHeader, project } = await resolveContext(projectId);
   const url = `${projectApiBase(project)}/build/builds?definitions=${definitionId}&queryOrder=queueTimeDescending&$top=50&api-version=7.1`;
+  const json = await fetchJson<RunsResponse>(url, authHeader);
+  return json.value ?? [];
+}
+
+export async function listRunsForProject(projectId: string): Promise<PipelineRun[]> {
+  const { authHeader, project } = await resolveContext(projectId);
+  const url = `${projectApiBase(project)}/build/builds?queryOrder=queueTimeDescending&$top=100&api-version=7.1`;
   const json = await fetchJson<RunsResponse>(url, authHeader);
   return json.value ?? [];
 }
